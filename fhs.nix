@@ -38,7 +38,7 @@ let
       openssl
       stdenv.cc
       unzip
-      utillinux
+      util-linux
       which
       texliveScheme
       ncurses
@@ -70,7 +70,7 @@ let
       libGL
       libcap
       libdrm
-      libgnome-keyring3
+      libgnome-keyring
       libgpg-error
       libnotify
       libpng
@@ -90,33 +90,32 @@ let
       vulkan-headers
       vulkan-validation-layers
       wayland
-      xorg.libICE
-      xorg.libSM
-      xorg.libX11
-      xorg.libXScrnSaver
-      xorg.libXcomposite
-      xorg.libXcursor
-      xorg.libXcursor
-      xorg.libXdamage
-      xorg.libXext
-      xorg.libXfixes
-      xorg.libXi
-      xorg.libXinerama
-      xorg.libXrandr
-      xorg.libXrender
-      xorg.libXt
-      xorg.libXtst
-      xorg.libXxf86vm
-      xorg.libxcb
-      xorg.libxkbfile
-      xorg.xorgproto
+      libice
+      libsm
+      libx11
+      libxscrnsaver
+      libxcomposite
+      libxcursor
+      libxcursor
+      libxdamage
+      libxext
+      libxfixes
+      libxi
+      libxinerama
+      libxrandr
+      libxrender
+      libxt
+      libxtst
+      libxxf86vm
+      libxcb
+      libxkbfile
+      xorgproto
       zlib
     ];
 
   nvidiaPackages = pkgs:
     with pkgs; [
-      cudatoolkit_11
-      cudnn_cudatoolkit_11
+      cudaPackages.cudatoolkit
       linuxPackages.nvidia_x11
     ];
 
@@ -156,7 +155,7 @@ let
   '';
 
   graphical_envvars = ''
-    export QTCOMPOSE=${pkgs.xorg.libX11}/share/X11/locale
+    export QTCOMPOSE=${pkgs.libx11}/share/X11/locale
   '';
 
   conda_envvars = ''
@@ -171,8 +170,8 @@ let
   '';
 
   nvidia_envvars = ''
-    export CUDA_PATH=${pkgs.cudatoolkit_11}
-    export LD_LIBRARY_PATH=${pkgs.cudatoolkit_11}/lib:${pkgs.cudnn_cudatoolkit_11}/lib:${pkgs.cudatoolkit_11.lib}/lib:${pkgs.zlib}/lib:$LD_LIBRARY_PATH
+    export CUDA_PATH=${pkgs.cudatoolkit}
+    export LD_LIBRARY_PATH=${pkgs.cudatoolkit}/lib:${pkgs.cudatoolkit.lib}/lib:${pkgs.zlib}/lib:$LD_LIBRARY_PATH
     export EXTRA_LDFLAGS="-L/lib -L${pkgs.linuxPackages.nvidia_x11}/lib"
   '';
 
@@ -188,7 +187,7 @@ let
     conda create -n ${condaJlEnv} python=${pythonVersion}
   '';
 in
-pkgs.buildFHSUserEnv {
+pkgs.buildFHSEnv {
   inherit multiPkgs extraOutputsToInstall;
   targetPkgs = targetPkgs;
   name = commandName; # Name used to start this UserEnv

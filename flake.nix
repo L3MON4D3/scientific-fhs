@@ -1,4 +1,7 @@
 {
+  inputs = {
+    nixpkgs.url = "https://channels.nixos.org/nixos-25.11/nixexprs.tar.xz";
+  };
   outputs = { self, nixpkgs, ... }:
     let
       pkgs = import nixpkgs { system = "x86_64-linux"; };
