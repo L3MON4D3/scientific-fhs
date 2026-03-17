@@ -16,6 +16,7 @@
 , texliveScheme ? pkgs.texlive.combined.scheme-minimal
 , extraOutputsToInstall ? ["man" "dev"]
 , extraPackages ? []
+, extraProfile ? ""
 }:
 
 with lib;
@@ -180,7 +181,8 @@ let
   envvars = std_envvars + optionalString enableGraphical graphical_envvars
     + optionalString enableConda conda_envvars
     + optionalString (enableConda && enableJulia) conda_julia_envvars
-    + optionalString enableNVIDIA nvidia_envvars;
+    + optionalString enableNVIDIA nvidia_envvars
+    + extraProfile;
 
   multiPkgs = pkgs: with pkgs; [ zlib ];
 
