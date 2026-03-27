@@ -17,10 +17,12 @@
 , extraOutputsToInstall ? ["man" "dev"]
 , extraPackages ? []
 , extraProfile ? ""
-}:
+, buildFHSEnv
+}@input :
 
 with lib;
 let
+  buildFHSEnv_eff = if input ? "buildFHSEnv" then input.buildFHSEnv else pkgs.buildFHSEnv;
   standardPackages = pkgs:
     with pkgs;
     [
@@ -191,7 +193,7 @@ let
     conda create -n ${condaJlEnv} python=${pythonVersion}
   '';
 in
-pkgs.buildFHSEnv {
+buildFHSEnv_eff {
   inherit multiPkgs extraOutputsToInstall;
   targetPkgs = targetPkgs;
   name = commandName; # Name used to start this UserEnv
