@@ -45,7 +45,6 @@ let
       m4
       nss
       openssl
-      stdenv.cc
       unzip
       util-linux
       which
