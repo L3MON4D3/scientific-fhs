@@ -4,7 +4,10 @@
   };
   outputs = { self, nixpkgs, ... }:
     let
-      pkgs = import nixpkgs { system = "x86_64-linux"; };
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+      };
     in
     {
       nixosModules.default = import ./module.nix;
