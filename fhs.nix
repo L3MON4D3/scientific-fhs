@@ -1,29 +1,34 @@
-{ lib
-, pkgs
-, enableJulia ? true
-, juliaVersion ? "1.10.1"
-, enableConda ? false
-, enablePython ? false
-, enableQuarto ? true
-, condaInstallationPath ? "~/.conda"
-, condaJlEnv ? "conda_jl"
-, pythonVersion ? "3.8"
-, enableGraphical ? false
-, enableNVIDIA ? false
-, enableNode ? false
-, commandName ? "scientific-fhs"
-, commandScript ? "bash"
-, texliveScheme ? pkgs.texlive.combined.scheme-minimal
-, extraOutputsToInstall ? ["man" "dev"]
-, extraPackages ? []
-, extraProfile ? ""
-, buildFHSEnv
-}@input :
+{
+  lib,
+  pkgs,
+  enableJulia ? true,
+  juliaVersion ? "1.10.1",
+  enableConda ? false,
+  enablePython ? false,
+  enableQuarto ? true,
+  condaInstallationPath ? "~/.conda",
+  condaJlEnv ? "conda_jl",
+  pythonVersion ? "3.8",
+  enableGraphical ? false,
+  enableNVIDIA ? false,
+  enableNode ? false,
+  commandName ? "scientific-fhs",
+  commandScript ? "bash",
+  texliveScheme ? pkgs.texlive.combined.scheme-minimal,
+  extraOutputsToInstall ? [
+    "man"
+    "dev"
+  ],
+  extraPackages ? [ ],
+  extraProfile ? "",
+  buildFHSEnv,
+}@input:
 
 with lib;
 let
   buildFHSEnv_eff = if input ? "buildFHSEnv" then input.buildFHSEnv else pkgs.buildFHSEnv;
-  standardPackages = pkgs:
+  standardPackages =
+    pkgs:
     with pkgs;
     [
       autoconf
@@ -47,11 +52,12 @@ let
       texliveScheme
       ncurses
       poetry
-    ] ++ lib.optional enableNode pkgs.nodejs
-      ++ extraPackages;
+    ]
+    ++ lib.optional enableNode pkgs.nodejs
+    ++ extraPackages;
 
-  graphicalPackages = pkgs:
-    with pkgs; [
+  graphicalPackages =
+    pkgs: with pkgs; [
       alsa-lib
       at-spi2-atk
       at-spi2-core
@@ -118,36 +124,46 @@ let
       zlib
     ];
 
-  nvidiaPackages = pkgs:
-    with pkgs; [
+  nvidiaPackages =
+    pkgs: with pkgs; [
       cudaPackages.cudatoolkit
       linuxPackages.nvidia_x11
     ];
 
+  quartoPackages =
+    pkgs:
+    let
+      quarto = pkgs.callPackage ./quarto.nix {
+        rWrapper = null;
+      };
+    in
+    [ quarto ];
 
-  quartoPackages = pkgs:
-  let
-    quarto = pkgs.callPackage ./quarto.nix {
-      rWrapper = null;
-    };
-  in [ quarto ];
+  condaPackages =
+    pkgs: with pkgs; [ (callPackage ./conda.nix { installationPath = condaInstallationPath; }) ];
 
-  condaPackages = pkgs:
-    with pkgs;
-    [ (callPackage ./conda.nix { installationPath = condaInstallationPath; }) ];
-
-  pythonPackages = pkgs:
-    with pkgs;
-    [
-      (python3.withPackages (ps: with ps; [
-        jupyter jupyterlab numpy scipy pandas matplotlib scikit-learn tox pygments
-      ]))
+  pythonPackages =
+    pkgs: with pkgs; [
+      (python3.withPackages (
+        ps: with ps; [
+          jupyter
+          jupyterlab
+          numpy
+          scipy
+          pandas
+          matplotlib
+          scikit-learn
+          tox
+          pygments
+        ]
+      ))
     ];
 
-  targetPkgs = pkgs:
+  targetPkgs =
+    pkgs:
     (standardPackages pkgs)
     ++ optionals enableGraphical (graphicalPackages pkgs)
-    ++ optionals enableJulia [(pkgs.callPackage ./julia.nix { juliaVersion=juliaVersion; })]
+    ++ optionals enableJulia [ (pkgs.callPackage ./julia.nix { juliaVersion = juliaVersion; }) ]
     ++ optionals enableQuarto (quartoPackages pkgs)
     ++ optionals enableConda (condaPackages pkgs)
     ++ optionals enableNVIDIA (nvidiaPackages pkgs)
@@ -180,7 +196,9 @@ let
     export EXTRA_LDFLAGS="-L/lib -L${pkgs.linuxPackages.nvidia_x11}/lib"
   '';
 
-  envvars = std_envvars + optionalString enableGraphical graphical_envvars
+  envvars =
+    std_envvars
+    + optionalString enableGraphical graphical_envvars
     + optionalString enableConda conda_envvars
     + optionalString (enableConda && enableJulia) conda_julia_envvars
     + optionalString enableNVIDIA nvidia_envvars
