@@ -22,6 +22,8 @@
   extraPackages ? [ ],
   extraProfile ? "",
   buildFHSEnv,
+  gcc,
+  clang,
 }@input:
 
 with lib;
@@ -29,8 +31,11 @@ let
   buildFHSEnv_eff = if input ? "buildFHSEnv" then input.buildFHSEnv else pkgs.buildFHSEnv;
   standardPackages =
     pkgs:
-    with pkgs;
     [
+      gcc
+      clang
+    ]
+    ++ (with pkgs; [
       autoconf
       binutils
       clang
@@ -51,7 +56,7 @@ let
       texliveScheme
       ncurses
       poetry
-    ]
+    ])
     ++ lib.optional enableNode pkgs.nodejs
     ++ extraPackages;
 
