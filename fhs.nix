@@ -194,11 +194,22 @@ let
     export CONDA_JL_HOME=${condaInstallationPath}/envs/${condaJlEnv}
   '';
 
-  nvidia_envvars = ''
-    export CUDA_PATH=${pkgs.cudatoolkit}
-    export LD_LIBRARY_PATH=${pkgs.cudatoolkit}/lib:${pkgs.cudatoolkit.lib}/lib:${pkgs.zlib}/lib:$LD_LIBRARY_PATH
-    export EXTRA_LDFLAGS="-L/lib -L${pkgs.linuxPackages.nvidia_x11}/lib"
-  '';
+  nvidia_envvars = (
+    let
+      cudatoolkit = pkgs.symlinkJoin {
+        name = "cudatoolkit";
+        paths = [
+          pkgs.cudaPackages.cudatoolkit
+          pkgs.cudaPackages.cuda_cuxxfilt.src
+        ];
+      };
+    in
+    ''
+      export CUDA_PATH=${cudatoolkit}
+      export LD_LIBRARY_PATH=${cudatoolkit}/lib:${pkgs.zlib}/lib:$LD_LIBRARY_PATH
+      export EXTRA_LDFLAGS="-L/lib -L${pkgs.linuxPackages.nvidia_x11}/lib"
+    ''
+  );
 
   envvars =
     std_envvars
