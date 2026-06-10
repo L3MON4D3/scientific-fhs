@@ -13,7 +13,7 @@
   enableNVIDIA ? false,
   enableNode ? false,
   commandName ? "scientific-fhs",
-  commandScript ? "bash",
+  runScript ? "bash",
   texliveScheme ? pkgs.texlive.combined.scheme-minimal,
   extraOutputsToInstall ? [
     "man"
@@ -227,9 +227,8 @@ let
   '';
 in
 buildFHSEnv_eff {
-  inherit multiPkgs extraOutputsToInstall;
+  inherit multiPkgs extraOutputsToInstall runScript;
   targetPkgs = targetPkgs;
   name = commandName; # Name used to start this UserEnv
-  runScript = commandScript;
   profile = envvars;
 }
