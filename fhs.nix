@@ -194,6 +194,12 @@ let
     export CONDA_JL_HOME=${condaInstallationPath}/envs/${condaJlEnv}
   '';
 
+  julia_envvars = ''
+    # julia needs this file so its package manager operates project-local.
+    touch Project.toml
+    export JULIA_PROJECT="@."
+  '';
+
   nvidia_envvars = (
     let
       cudatoolkit = pkgs.symlinkJoin {
@@ -211,11 +217,12 @@ let
     ''
   );
 
-  envvars =
+  profile =
     std_envvars
     + optionalString enableGraphical graphical_envvars
     + optionalString enableConda conda_envvars
     + optionalString (enableConda && enableJulia) conda_julia_envvars
+    + optionalString enableJulia julia_envvars
     + optionalString enableNVIDIA nvidia_envvars
     + extraProfile;
 
@@ -230,5 +237,5 @@ buildFHSEnv_eff {
   inherit multiPkgs extraOutputsToInstall runScript;
   targetPkgs = targetPkgs;
   name = commandName; # Name used to start this UserEnv
-  profile = envvars;
+  profile = profile;
 }
