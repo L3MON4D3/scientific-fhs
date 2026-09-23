@@ -78,7 +78,6 @@ let
       glfw
       glib
       glib.out
-      gnome2.GConf
       gtk2
       gtk2-x11
       gtk3
