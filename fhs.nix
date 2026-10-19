@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  jetls,
   enableJulia ? true,
   juliaVersion ? "1.10.1",
   enableConda ? false,
@@ -166,7 +167,16 @@ let
     pkgs:
     (standardPackages pkgs)
     ++ optionals enableGraphical (graphicalPackages pkgs)
-    ++ optionals enableJulia [ (pkgs.callPackage ./julia.nix { juliaVersion = juliaVersion; }) ]
+    ++ optionals enableJulia (
+      let
+        julia = pkgs.callPackage ./julia.nix { juliaVersion = juliaVersion; };
+        resolvedJetls = jetls.override { inherit julia; };
+      in
+      [
+        julia
+        resolvedJetls
+      ]
+    )
     ++ optionals enableQuarto (quartoPackages pkgs)
     ++ optionals enableConda (condaPackages pkgs)
     ++ optionals enableNVIDIA (nvidiaPackages pkgs)

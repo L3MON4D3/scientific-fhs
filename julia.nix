@@ -1,6 +1,6 @@
-{ stdenv, lib, fetchurl, zlib, glib, libxi, libxcb, libxrender, libx11, libsm, libice, libxext, dbus, fontconfig, freetype, libGL, juliaVersion }:
-
+{ pkgs, juliaVersion }:
 let
+  # These are hashes of the official x86_64-linux binary archives.
   versionShas = {
     "1.13.0" = "sha256-iXXaYcEopeXe0+cZ6GjajIeB3reteRPTf7mb4CqBkEs=";
     "1.12.5" = "sha256-QbhNcn5Olvvz7Z6S+hlddz0ke5CX9z+taI+LaZdYuuc=";
@@ -14,51 +14,30 @@ let
     "1.10.0-beta2" = "sha256-8aF/WlKYDBZ0Fsvk7aFEGdgY87dphUARVKOlZ4edZHc=";
     "1.10.0-beta1" = "sha256-zaOKLdWw7GBcwH/6RO/T6f4QctsmUllT0eJPtDLgv08=";
     "1.9.3" = "sha256-12ZwzJuj4P1MFUXdPQAmnAaUl2oRdjEnlevOFpLTI9E=";
-    "1.9.2" = "sha256-TC15n0Qtf+cYgnsZ2iusty6gQbnOVfJO7nsTE/V8Q4M=";    
-    "1.9.0" = "sha256-AMYURm75gJwusjSA440ZaixXf/8nMMT4PRNbkT1HM1k=";    
+    "1.9.2" = "sha256-TC15n0Qtf+cYgnsZ2iusty6gQbnOVfJO7nsTE/V8Q4M=";
+    "1.9.0" = "sha256-AMYURm75gJwusjSA440ZaixXf/8nMMT4PRNbkT1HM1k=";
     "1.8.3" = "sha256-M8Owk1b/qiXTMxw2RrHy1LCZROj5P8uZSVeAG4u/WKk=";
     "1.7.2" = "sha256-p1JEck87LeDnJJyGH79kB4JXwW+0IDvnjxz03VlzupU=";
     "1.6.7" = "sha256-bEUi1ZXky80AFXrEWKcviuwBdXBT0gc/mdqjnkQrKjY=";
   };
-  makeStdJulia = version: let
-    url = "https://julialang-s3.julialang.org/bin/linux/x64/${
-      lib.versions.majorMinor version
-    }/julia-${version}-linux-x86_64.tar.gz";
-    src = fetchurl {
-      inherit url;  sha256=versionShas.${version};
-    };
-  in makeJulia version src;
-  makeJulia = version: src:
-    stdenv.mkDerivation {
-      name = "julia-${version}";
-      src = src;
-      installPhase = ''
-        mkdir $out
-        cp -R * $out/
 
-        # Patch for https://github.com/JuliaInterop/RCall.jl/issues/339.
+  baseJulia = pkgs.callPackage (import
+    (pkgs.path + "/pkgs/development/compilers/julia/generic-bin.nix")
+    {
+      version = juliaVersion;
+      sha256.x86_64-linux = versionShas.${juliaVersion};
+    }
+  ) { };
 
-        echo "patching $out"
-        cp -L ${stdenv.cc.cc.lib}/lib/libstdc++.so.6 $out/lib/julia/
-      '';
-      dontStrip = true;
-      ldLibraryPath = lib.makeLibraryPath [
-        stdenv.cc.cc
-        zlib
-        glib
-        libxi
-        libxcb
-        libxrender
-        libx11
-        libsm
-        libice
-        libxext
-        dbus
-        fontconfig
-        freetype
-        libGL
-      ];
+  julia = baseJulia.overrideAttrs (old: {
+    passthru = (old.passthru or { }) // {
+      withPackages = pkgs.callPackage (pkgs.path + "/pkgs/development/julia-modules") { inherit julia; };
     };
-  julia = (makeStdJulia juliaVersion);
+  });
 in
+assert pkgs.lib.assertMsg (
+  pkgs.stdenv.hostPlatform.system == "x86_64-linux"
+) "julia.nix currently provides archive hashes only for x86_64-linux";
+assert pkgs.lib.assertMsg (builtins.hasAttr juliaVersion versionShas)
+  "No Julia archive hash configured for ${juliaVersion}";
 julia
